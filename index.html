@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Threemap Diagram</title>
+    <title>Tree Diagram</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,11 +16,19 @@
   <body>
     <div class="main">
       <div class="container">
+        <section class="links">
+          <ul>
+            <li><a class="videogames">Video Game Data Set</a></li>
+            <li><a class="movies">Movies Data Set</a></li>
+            <li><a class="kickstarter">Kickstarter Data Set</a></li>
+          </ul>
+        </section>
         <div class="spinner-border" role="status" id="loading">
           <span class="sr-only">Loading...</span>
         </div>
       </div>
       <a
+        class="developer"
         href="https://github.com/FARichieri/data-visualization__heat-map"
         target="_blank"
         >By frichieri</a
