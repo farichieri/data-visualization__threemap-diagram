@@ -41,8 +41,6 @@ const displayThreeMapDiagram = async () => {
       },
     };
 
-    console.log({ path });
-
     // Fetch data
     const matchingData =
       path === URL.HOME
@@ -53,10 +51,9 @@ const displayThreeMapDiagram = async () => {
         ? MATCHING_DATA.KICKSTARTER
         : MATCHING_DATA.VIDEOGAMES;
 
-    console.log({ matchingData });
     const pathUrl = matchingData.URL;
-    const title = matchingData.TITLE;
-    const description = matchingData.SUBTITLE;
+    const dataTitle = matchingData.TITLE;
+    const dataDescription = matchingData.SUBTITLE;
 
     let response = await fetch(
       `https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/${pathUrl}.json`
@@ -68,6 +65,14 @@ const displayThreeMapDiagram = async () => {
     const width = 550;
     const height = 400;
     const padding = 50;
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const tooltip = d3
+      .select('.container')
+      .append('div')
+      .attr('id', 'tooltip')
+      .style('opacity', 0);
 
     // Create SVG
     const svg = d3
@@ -84,7 +89,7 @@ const displayThreeMapDiagram = async () => {
       .attr('text-anchor', 'middle')
       .style('font-size', '1.2rem')
       .style('font-weight', 'bold')
-      .text(title);
+      .text(dataTitle);
 
     // Add description
     svg
@@ -94,11 +99,70 @@ const displayThreeMapDiagram = async () => {
       .attr('y', 50)
       .attr('text-anchor', 'middle')
       .style('font-size', '1rem')
-      .text(description);
+      .text(dataDescription);
 
-    // Add Axis
-    // const xScale = d3.scaleLinear().domain().range();
-    // const yScale = d3.scaleLinear().domain().range();
+    // Create treemap
+    const treemap = d3.treemap().size([width, height]).padding(1);
+    const root = d3.hierarchy(data).sum((d) => d.value);
+    treemap(root);
+
+    const cell = svg
+      .selectAll('g')
+      .data(root.leaves())
+      .enter()
+      .append('g')
+      .attr('transform', (d) => `translate(${d.x0}, ${d.y0})`);
+
+    const title = cell
+      .append('rect')
+      .attr('class', 'title')
+      .attr('data-name', (d) => d.name)
+      .attr('data-category', (d) => d.data.category)
+      .attr('width', (d) => d.x1 - d.x0)
+      .attr('height', (d) => d.y1 - d.y0)
+      .attr('fill', (d) => color(d.data.category))
+      .on('mouseover', function (d, item) {
+        const { name, category, value } = item.data;
+        d3.select(this)
+          .transition()
+          .duration('50')
+          .attr('opacity', '.50')
+          .attr('stroke', 'black')
+          .attr('stroke-width', '0.9');
+        tooltip.transition().duration(100).style('opacity', 1);
+        tooltip
+          .html(
+            `
+            <div>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Category:</strong> ${category}</p>
+            <p><strong>Value:</strong> ${value}</p>
+            </div>
+      `
+          )
+          .attr('data-value', value)
+          .style('left', d.pageX - 50 + 'px')
+          .style('top', d.pageY - 50 + 'px');
+      })
+      .on('mouseout', function () {
+        d3.select(this)
+          .transition()
+          .duration('50')
+          .attr('opacity', '1')
+          .attr('stroke', 'none');
+        tooltip.transition().duration(100).style('opacity', 0);
+      });
+
+    cell
+      .append('text')
+      .selectAll('tspan')
+      .data((d) => d.data.name.split(/(?=[A-Z][^A-Z])/g))
+      .enter()
+      .append('tspan')
+      .attr('style', 'font-size: 8px')
+      .attr('x', 4)
+      .attr('y', (d, i) => 15 + i * 15)
+      .text((d) => d);
 
     hideLoader();
   } catch (error) {
