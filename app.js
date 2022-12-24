@@ -62,9 +62,9 @@ const displayThreeMapDiagram = async () => {
     console.log({ data });
 
     // Constants
-    const width = 550;
-    const height = 400;
-    const padding = 50;
+    const width = 600;
+    const height = 250;
+    const padding = 65;
 
     const color = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -81,28 +81,16 @@ const displayThreeMapDiagram = async () => {
       .attr('viewBox', `0 0 ${width} ${height}`);
 
     // Add Title
-    svg
-      .append('text')
-      .attr('id', 'title')
-      .attr('x', width / 2)
-      .attr('y', 30)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '1.2rem')
-      .style('font-weight', 'bold')
-      .text(dataTitle);
+    document.getElementById('title').innerHTML = dataTitle;
 
     // Add description
-    svg
-      .append('text')
-      .attr('id', 'description')
-      .attr('x', width / 2)
-      .attr('y', 50)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '1rem')
-      .text(dataDescription);
+    document.getElementById('description').innerHTML = dataDescription;
 
     // Create treemap
-    const treemap = d3.treemap().size([width, height]).padding(1);
+    const treemap = d3
+      .treemap()
+      .size([width - padding, height])
+      .padding(0.5);
     const root = d3.hierarchy(data).sum((d) => d.value);
     treemap(root);
 
@@ -113,10 +101,12 @@ const displayThreeMapDiagram = async () => {
       .append('g')
       .attr('transform', (d) => `translate(${d.x0}, ${d.y0})`);
 
-    const title = cell
+    const tile = cell
       .append('rect')
-      .attr('class', 'title')
-      .attr('data-name', (d) => d.name)
+      .attr('class', 'tile')
+      .attr('data-name', (d) => d.data.name)
+      .attr('data-category', (d) => d.data.category)
+      .attr('data-value', (d) => d.data.value)
       .attr('data-category', (d) => d.data.category)
       .attr('width', (d) => d.x1 - d.x0)
       .attr('height', (d) => d.y1 - d.y0)
@@ -140,9 +130,9 @@ const displayThreeMapDiagram = async () => {
             </div>
       `
           )
-          .attr('data-value', value)
           .style('left', d.pageX - 50 + 'px')
-          .style('top', d.pageY - 50 + 'px');
+          .style('top', d.pageY - 50 + 'px')
+          .attr('data-value', value);
       })
       .on('mouseout', function () {
         d3.select(this)
@@ -159,10 +149,57 @@ const displayThreeMapDiagram = async () => {
       .data((d) => d.data.name.split(/(?=[A-Z][^A-Z])/g))
       .enter()
       .append('tspan')
-      .attr('style', 'font-size: 8px')
-      .attr('x', 4)
-      .attr('y', (d, i) => 15 + i * 15)
+      .attr('style', 'font-size: 4px')
+      .attr('x', 2)
+      .attr('y', (d, i) => 4 + i * 5)
       .text((d) => d);
+
+    const legendWIth = width / 4;
+    const legendHeight = 20;
+    const blockSize = 10;
+
+    const categories = root
+      .leaves()
+      .map((leave) => leave.data.category)
+      .filter((item, idx, arr) => arr.indexOf(item) === idx);
+
+    svg
+      .append('g')
+      .attr('id', 'legend')
+      .attr('transform', `translate(${width - padding}, ${padding / 4})`)
+      .append('g')
+      .attr('width', legendWIth)
+      .attr('height', legendHeight);
+
+    svg
+      .select('#legend')
+      .append('g')
+      .attr('id', 'colors')
+      .selectAll('rect')
+      .data(categories)
+      .enter()
+      .append('rect')
+      .attr('class', 'legend-item')
+      .attr('x', blockSize / 2)
+      .attr('y', (d, i) => i * (blockSize + 1) + 10)
+      .attr('width', blockSize)
+      .attr('height', blockSize)
+      .attr('fill', (d) => color(d))
+      .attr('stroke', 'black')
+      .attr('stroke-width', '.2');
+
+    svg
+      .append('g')
+      .selectAll('text')
+      .data(categories)
+      .enter()
+      .append('text')
+      .attr('transform', `translate(${width - padding}, ${padding / 4})`)
+      .attr('fill', 'black')
+      .attr('x', blockSize * 2)
+      .attr('y', (d, i) => i * (blockSize + 1) + 17)
+      .text((d) => d)
+      .style('font-size', 5);
 
     hideLoader();
   } catch (error) {
